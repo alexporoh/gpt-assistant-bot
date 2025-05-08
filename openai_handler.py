@@ -6,6 +6,11 @@ openai.api_key = OPENAI_KEY
 
 def chat_with_gpt(user_input):
     system_prompt = get_prompt()
+
+    print("📤 [GPT] Исходящий запрос:")
+    print(f"[SYSTEM]: {system_prompt}")
+    print(f"[USER]: {user_input}")
+
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -14,6 +19,9 @@ def chat_with_gpt(user_input):
                 {"role": "user", "content": user_input}
             ]
         )
-        return response['choices'][0]['message']['content'].strip()
+        answer = response['choices'][0]['message']['content'].strip()
+        print(f"✅ [GPT] Ответ: {answer}")
+        return answer
     except Exception as e:
+        print(f"❌ [GPT ERROR]: {e}")
         return "Ошибка при обращении к GPT"
