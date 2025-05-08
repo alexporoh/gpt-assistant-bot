@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Админ-панель GPT-бота</title>
+</head>
+<body>
+    <h2>📢 Рассылка пользователям</h2>
+    <form action="/broadcast" method="post">
+        <textarea name="message" rows="4" cols="50" placeholder="Введите текст для рассылки"></textarea><br>
+        <button type="submit">Разослать</button>
+    </form>
+
+    <hr>
+
+    <h2>🧠 Изменить системный промт</h2>
+    <form action="/prompt" method="post">
+        <textarea name="prompt" rows="4" cols="50" placeholder="Новый системный промт"></textarea><br>
+        <button type="submit">Обновить</button>
+    </form>
+</body>
+</html>

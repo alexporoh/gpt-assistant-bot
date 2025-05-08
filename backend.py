@@ -1,18 +1,25 @@
 from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from database import get_users, save_prompt, get_prompt
 from bot import WEBHOOK_URL, application
 from telegram import Update
 import asyncio
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
 @app.on_event("startup")
 async def startup_event():
     await application.bot.set_webhook(WEBHOOK_URL + "/webhook")
 
-@app.get("/")
-def index():
-    return {"message": "GPT Bot Backend Running"}
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request})
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin_panel(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request})
 
 @app.post("/broadcast")
 def broadcast(message: str = Form(...)):
