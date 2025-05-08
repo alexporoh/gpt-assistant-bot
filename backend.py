@@ -1,9 +1,13 @@
 from fastapi import FastAPI, Form
 from database import get_users, save_prompt, get_prompt
-from bot import bot
-import os
+from bot import bot, WEBHOOK_URL, application
+import asyncio
 
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    await application.bot.set_webhook(WEBHOOK_URL + "/webhook")
 
 @app.get("/")
 def index():
