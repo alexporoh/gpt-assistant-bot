@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Form, Request
 from database import get_users, save_prompt, get_prompt
-from bot import bot, WEBHOOK_URL, application
+from bot import WEBHOOK_URL, application
 from telegram import Update
 import asyncio
 
@@ -19,7 +19,7 @@ def broadcast(message: str = Form(...)):
     users = get_users()
     for user_id in users:
         try:
-            bot.send_message(chat_id=user_id, text=message)
+            application.bot.send_message(chat_id=user_id, text=message)
         except Exception as e:
             print(f"Ошибка при отправке {user_id}: {e}")
     return {"status": "sent", "count": len(users)}
@@ -36,6 +36,6 @@ def read_prompt():
 @app.post("/webhook")
 async def telegram_webhook(req: Request):
     data = await req.json()
-    update = Update.de_json(data, bot)
+    update = Update.de_json(data, application.bot)
     await application.process_update(update)
     return {"ok": True}
