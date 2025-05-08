@@ -3,10 +3,11 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from database import get_users, save_prompt, get_prompt
 from bot import WEBHOOK_URL, application
-from telegram import Update
+from telegram import Update, error
 import csv
 import io
 import asyncio
+import time
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -26,15 +27,28 @@ def admin_panel(request: Request, password: str = ""):
 @app.post("/broadcast")
 def broadcast(message: str = Form(...)):
     users = get_users()
-    print(f"📦 Рассылка запущена. Пользователей: {len(users)}")
+    print(f"📦 Рассылка запущена. Пользователей в базе: {len(users)}")
+
+    success, failed = 0, 0
 
     for user_id in users:
         try:
-            application.bot.send_message(chat_id=user_id, text=message)
-            print(f"✅ Отправлено: {user_id}")
+            msg = application.bot.send_message(chat_id=user_id, text=f"[Рассылка] {message}")
+            print(f"✅ Отправлено: {user_id} | msg_id: {msg.message_id}")
+            success += 1
+        except error.Forbidden as e:
+            print(f"⛔️ Пользователь {user_id} заблокировал бота или удалён: {e}")
+            failed += 1
+        except error.TelegramError as e:
+            print(f"❌ Telegram ошибка при отправке {user_id}: {e}")
+            failed += 1
         except Exception as e:
-            print(f"❌ Ошибка {user_id}: {e}")
-    return {"status": "sent", "count": len(users)}
+            print(f"⚠️ Другая ошибка у {user_id}: {e}")
+            failed += 1
+        time.sleep(0.1)
+
+    print(f"📊 Результат рассылки: Успешно: {success}, Ошибок: {failed}")
+    return {"status": "done", "sent": success, "failed": failed}
 
 @app.post("/prompt")
 def update_prompt(prompt: str = Form(...)):
