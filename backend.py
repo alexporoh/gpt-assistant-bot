@@ -7,7 +7,6 @@ from telegram import Update, error
 import csv
 import io
 import asyncio
-import time
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -25,7 +24,7 @@ def admin_panel(request: Request, password: str = ""):
     return templates.TemplateResponse("admin.html", {"request": request})
 
 @app.post("/broadcast")
-def broadcast(message: str = Form(...)):
+async def broadcast(message: str = Form(...)):
     users = get_users()
     print(f"📦 Рассылка запущена. Пользователей в базе: {len(users)}")
 
@@ -33,7 +32,7 @@ def broadcast(message: str = Form(...)):
 
     for user_id in users:
         try:
-            msg = application.bot.send_message(chat_id=user_id, text=f"[Рассылка] {message}")
+            msg = await application.bot.send_message(chat_id=user_id, text=f"[Рассылка] {message}")
             print(f"✅ Отправлено: {user_id} | msg_id: {msg.message_id}")
             success += 1
         except error.Forbidden as e:
@@ -45,7 +44,7 @@ def broadcast(message: str = Form(...)):
         except Exception as e:
             print(f"⚠️ Другая ошибка у {user_id}: {e}")
             failed += 1
-        time.sleep(0.1)
+        await asyncio.sleep(0.1)
 
     print(f"📊 Результат рассылки: Успешно: {success}, Ошибок: {failed}")
     return {"status": "done", "sent": success, "failed": failed}
