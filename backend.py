@@ -37,5 +37,9 @@ def read_prompt():
 async def telegram_webhook(req: Request):
     data = await req.json()
     update = Update.de_json(data, application.bot)
+
+    if not application.running:
+        await application.initialize()
+
     await application.process_update(update)
     return {"ok": True}
