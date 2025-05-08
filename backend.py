@@ -38,4 +38,4 @@ async def telegram_webhook(req: Request):
     data = await req.json()
     update = Update.de_json(data, bot)
     await application.process_update(update)
-    return {"ok": True"}
+    return {"ok": True}
