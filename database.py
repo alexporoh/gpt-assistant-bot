@@ -1,40 +1,51 @@
-import sqlite3
+from sqlalchemy import create_engine, Column, Integer, String, Text
+from sqlalchemy.orm import sessionmaker, declarative_base
+import os
 
-def init_db():
-    conn = sqlite3.connect("data.db")
-    cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY)")
-    cur.execute("CREATE TABLE IF NOT EXISTS prompt (id INTEGER PRIMARY KEY, text TEXT)")
-    conn.commit()
-    conn.close()
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data.db")
 
-def add_user(user_id):
-    conn = sqlite3.connect("data.db")
-    cur = conn.cursor()
-    cur.execute("INSERT OR IGNORE INTO users (id) VALUES (?)", (user_id,))
-    conn.commit()
-    conn.close()
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+
+class Prompt(Base):
+    __tablename__ = "prompt"
+    id = Column(Integer, primary_key=True, default=1)
+    content = Column(Text, nullable=False)
+
+# Создание таблиц
+Base.metadata.create_all(bind=engine)
+
+def add_user(user_id: int):
+    db = SessionLocal()
+    if not db.query(User).filter(User.id == user_id).first():
+        db.add(User(id=user_id))
+        db.commit()
+    db.close()
 
 def get_users():
-    conn = sqlite3.connect("data.db")
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM users")
-    users = [row[0] for row in cur.fetchall()]
-    conn.close()
+    db = SessionLocal()
+    users = [user.id for user in db.query(User).all()]
+    db.close()
     return users
 
-def save_prompt(text):
-    conn = sqlite3.connect("data.db")
-    cur = conn.cursor()
-    cur.execute("DELETE FROM prompt")
-    cur.execute("INSERT INTO prompt (id, text) VALUES (1, ?)", (text,))
-    conn.commit()
-    conn.close()
+def save_prompt(prompt_text: str):
+    db = SessionLocal()
+    prompt = db.query(Prompt).first()
+    if prompt:
+        prompt.content = prompt_text
+    else:
+        prompt = Prompt(id=1, content=prompt_text)
+        db.add(prompt)
+    db.commit()
+    db.close()
 
 def get_prompt():
-    conn = sqlite3.connect("data.db")
-    cur = conn.cursor()
-    cur.execute("SELECT text FROM prompt WHERE id = 1")
-    result = cur.fetchone()
-    conn.close()
-    return result[0] if result else "You are a helpful assistant."
+    db = SessionLocal()
+    prompt = db.query(Prompt).first()
+    db.close()
+    return prompt.content if prompt else "Ты — дружелюбный Telegram-ассистент."
